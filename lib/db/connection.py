@@ -1,14 +1,14 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker
+from .models import Base
 
-DB_FILE = "sqlite:///construction_ops.db"  # SQLAlchemy database URL
-Base = declarative_base()
-engine = create_engine(DB_FILE, echo=False)
-Session = sessionmaker(bind=engine)
+DATABASE_URL = "sqlite:///construction_ops.db"
+
+engine = create_engine(DATABASE_URL, echo=False)
+SessionLocal = sessionmaker(bind=engine)
 
 def get_session():
-    return Session()
+    return SessionLocal()
 
 def initialize_db():
-    from lib.db.models import Project, Worker, Assignment
-    Base.metadata.create_all(engine)
+    Base.metadata.create_all(bind=engine)

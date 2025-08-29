@@ -1,120 +1,76 @@
-from lib.db.connection import get_session
+from lib.db.connection import get_session, initialize_db
+from lib.db.models import Project, Worker
 from tabulate import tabulate
-from sqlalchemy import text
 
-def create_project(name, location):
-    session = get_session()
-    session.execute(text("INSERT INTO projects (name, location) VALUES (:name, :location)"), {"name": name, "location": location})
-    session.commit()
-    session.close()
-    print(f"Project '{name}' added successfully!")
+def list_projects(session):
+    projects = session.query(Project).all()
+    table = [(p.id, p.name, p.location) for p in projects]
+    print(tabulate(table, headers=["ID", "Name", "Location"], tablefmt="fancy_grid"))
 
-def create_worker(name, role):
-    session = get_session()
-    session.execute(text("INSERT INTO workers (name, role) VALUES (:name, :role)"), {"name": name, "role": role})
-    session.commit()
-    session.close()
-    print(f"Worker '{name}' added successfully!")
+def list_workers(session):
+    workers = session.query(Worker).all()
+    table = [(w.id, w.name, w.role) for w in workers]
+    print(tabulate(table, headers=["ID", "Name", "Role"], tablefmt="fancy_grid"))
 
-def list_projects():
-    session = get_session()
-    rows = session.execute(text("SELECT * FROM projects")).fetchall()
-    session.close()
-    if rows:
-        print(tabulate(rows, headers=["ID","Project Name","Location"], tablefmt="fancy_grid"))
+def assign_worker(session):
+    list_workers(session)
+    worker_id = int(input("Enter Worker ID to assign: "))
+    list_projects(session)
+    project_id = int(input("Enter Project ID to assign to: "))
+    worker = session.query(Worker).get(worker_id)
+    project = session.query(Project).get(project_id)
+    if worker and project:
+        project.workers.append(worker)
+        session.commit()
+        print(f"{worker.name} assigned to {project.name}")
     else:
-        print("No projects found.")
+        print("Invalid IDs")
 
-def list_workers():
-    session = get_session()
-    rows = session.execute(text("SELECT * FROM workers")).fetchall()
-    session.close()
-    if rows:
-        print(tabulate(rows, headers=["ID","Worker Name","Role"], tablefmt="fancy_grid"))
-    else:
-        print("No workers found.")
+def list_assignments(session):
+    projects = session.query(Project).all()
+    table = []
+    for p in projects:
+        for w in p.workers:
+            table.append([p.name, p.location, w.name, w.role])
+    print(tabulate(table, headers=["Project", "Location", "Worker", "Role"], tablefmt="fancy_grid"))
 
-def assign_worker_to_project(worker_id, project_id):
-    session = get_session()
-    session.execute(text("INSERT INTO assignments (worker_id, project_id) VALUES (:worker_id, :project_id)"), {"worker_id": worker_id, "project_id": project_id})
-    session.commit()
-    session.close()
-    print(f"Worker {worker_id} assigned to project {project_id} successfully!")
+def project_snapshot(session):
+    projects = session.query(Project).all()
+    table = []
 
-def list_assignments():
-    session = get_session()
-    rows = session.execute(text("""
-        SELECT a.id AS AssignmentID, w.name AS WorkerName, w.role AS WorkerRole, p.name AS ProjectName, p.location AS ProjectLocation
-        FROM assignments a
-        JOIN workers w ON a.worker_id = w.id
-        JOIN projects p ON a.project_id = p.id
-        ORDER BY p.id
-    """)).fetchall()
-    session.close()
-    if rows:
-        print(tabulate(rows, headers=["Assignment ID","Worker","Role","Project","Location"], tablefmt="fancy_grid"))
-    else:
-        print("No assignments found.")
+    for p in projects:
+        workers_list = [f"{w.name} ({w.role})" for w in p.workers]
+        workers_str = ", ".join(workers_list) if workers_list else "No workers assigned"
+        table.append([p.id, p.name, p.location, workers_str])
 
-def show_project_snapshot():
-    session = get_session()
-    results = session.execute(text("""
-        SELECT
-            p.id AS ProjectID,
-            p.name AS ProjectName,
-            p.location AS Location,
-            w.name AS WorkerName,
-            w.role AS WorkerRole
-        FROM assignments a
-        JOIN projects p ON a.project_id = p.id
-        JOIN workers w ON a.worker_id = w.id
-        ORDER BY p.id;
-    """)).fetchall()
-    session.close()
-    
-    if results:
-        print(tabulate(results, headers=["ProjectID","ProjectName","Location","WorkerName","WorkerRole"], tablefmt="fancy_grid"))
-    else:
-        print("No assignments found.")
+    print(tabulate(table, headers=["ID", "Project", "Location", "Workers"], tablefmt="fancy_grid"))
 
 def menu():
+    initialize_db()
+    session = get_session()
     while True:
         print("\n--- Construction Ops CLI ---")
-        print("1. Add Project")
-        print("2. Add Worker")
-        print("3. List Projects")
-        print("4. List Workers")
-        print("5. Assign Worker to Project")
-        print("6. List Assignments")
-        print("7. Show Project Snapshot")
-        print("8. Exit")
-
+        print("1. List Projects")
+        print("2. List Workers")
+        print("3. Assign Worker to Project")
+        print("4. List Assignments")
+        print("5. Project Snapshot")
+        print("6. Exit")
         choice = input("Enter choice: ")
 
         if choice == "1":
-            name = input("Project name: ")
-            location = input("Project location: ")
-            create_project(name, location)
+            list_projects(session)
         elif choice == "2":
-            name = input("Worker name: ")
-            role = input("Worker role: ")
-            create_worker(name, role)
+            list_workers(session)
         elif choice == "3":
-            list_projects()
+            assign_worker(session)
         elif choice == "4":
-            list_workers()
+            list_assignments(session)
         elif choice == "5":
-            list_workers()
-            worker_id = input("Enter worker ID to assign: ")
-            list_projects()
-            project_id = input("Enter project ID to assign to: ")
-            assign_worker_to_project(worker_id, project_id)
+            project_snapshot(session)
         elif choice == "6":
-            list_assignments()
-        elif choice == "7":
-            show_project_snapshot()
-        elif choice == "8":
-            print("Goodbye!")
+            session.close()
+            print("Exiting Aquiltech Systems!")
             break
         else:
             print("Invalid choice, try again!")
