@@ -1,53 +1,59 @@
-from lib.db.connection import get_session, initialize_db
-from lib.db.models import Project, Worker
+from lib.db.connection import get_session
+from lib.db.models import Project, Worker, Assignment
 
 def seed_data():
-    initialize_db()
     session = get_session()
 
-    # Clear old data
-    session.query(Project).delete()
-    session.query(Worker).delete()
-    session.commit()
-
-    # Sample projects
+    # Projects
     projects = [
-        Project(name="Mombasa Road Expansion", location="Mombasa"),
-        Project(name="Nairobi West Feeder Road", location="Nairobi"),
-        Project(name="Kisumu Highway Rehabilitation", location="Kisumu"),
-        Project(name="Machakos Admin Block Construction", location="Machakos"),
-        Project(name="Thika Small Bridge Project", location="Thika"),
-        Project(name="Kajiado Local Road Upgrade", location="Kajiado"),
-        Project(name="Nakuru Residential Complex", location="Nakuru")
+        ("Mombasa Road Expansion", "Mombasa"),
+        ("Nairobi Highway Rehabilitation", "Nairobi"),
+        ("Thika Town Feeder Roads", "Thika"),
+        ("Eldoret Admin Block Construction", "Eldoret"),
+        ("Kisumu Drainage Works", "Kisumu"),
+        ("Nakuru Small Roads Upgrade", "Nakuru"),
+        ("Kitale Residential Development", "Kitale")
     ]
+    for name, location in projects:
+        session.add(Project(name=name, location=location))
 
-    # Sample workers
+    # Workers
     workers = [
-        Worker(name="Alice Mwangi", role="Resident Engineer"),
-        Worker(name="Bob Otieno", role="Foreman"),
-        Worker(name="Charlie Njoroge", role="Laborer"),
-        Worker(name="Diana Wambui", role="Architect"),
-        Worker(name="Ezekiel Ochieng", role="Site Supervisor"),
-        Worker(name="Faith Kamau", role="Quantity Surveyor"),
-        Worker(name="George Kiptoo", role="Safety Officer")
+        ("Alice", "Engineer"),
+        ("Bob", "Foreman"),
+        ("Charlie", "Laborer"),
+        ("Diana", "Technician"),
+        ("Edward", "Surveyor")
     ]
+    for name, role in workers:
+        session.add(Worker(name=name, role=role))
 
-    session.add_all(projects)
-    session.add_all(workers)
     session.commit()
 
     # Assign workers to projects
-    projects[0].workers.extend([workers[0], workers[1], workers[2]])
-    projects[1].workers.extend([workers[0], workers[3], workers[4]])
-    projects[2].workers.extend([workers[1], workers[5], workers[6]])
-    projects[3].workers.extend([workers[3], workers[0]])
-    projects[4].workers.extend([workers[4], workers[5]])
-    projects[5].workers.extend([workers[6], workers[1]])
-    projects[6].workers.extend([workers[3], workers[2], workers[0]])
+    project_ids = [p.id for p in session.query(Project).all()]
+    worker_ids = [w.id for w in session.query(Worker).all()]
+
+    # Some sample assignments
+    assignments = [
+        (project_ids[0], worker_ids[0]),
+        (project_ids[0], worker_ids[1]),
+        (project_ids[1], worker_ids[0]),
+        (project_ids[1], worker_ids[2]),
+        (project_ids[2], worker_ids[1]),
+        (project_ids[3], worker_ids[3]),
+        (project_ids[4], worker_ids[4]),
+        (project_ids[5], worker_ids[2]),
+        (project_ids[6], worker_ids[0]),
+        (project_ids[6], worker_ids[4])
+    ]
+
+    for proj_id, worker_id in assignments:
+        session.add(Assignment(project_id=proj_id, worker_id=worker_id))
 
     session.commit()
     session.close()
-    print("Sample data inserted successfully.")
+    print("Sample data inserted.")
 
 if __name__ == "__main__":
     seed_data()

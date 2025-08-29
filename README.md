@@ -24,3 +24,5 @@ A command-line interface (CLI) application to manage construction projects, work
 ```bash
 git clone <your-repo-url>
 cd construction_ops_cli
+
+Author:Fletcher Kariuki
