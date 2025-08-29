@@ -1,31 +1,14 @@
-import sqlite3
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-DB_FILE = "construction_ops.db"
+DB_FILE = "sqlite:///construction_ops.db"  # SQLAlchemy database URL
+Base = declarative_base()
+engine = create_engine(DB_FILE, echo=False)
+Session = sessionmaker(bind=engine)
 
-def get_connection():
-    return sqlite3.connect(DB_FILE)
+def get_session():
+    return Session()
 
 def initialize_db():
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    # Create projects table
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS projects (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        location TEXT
-    )
-    """)
-    
-    # Create workers table
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS workers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        role TEXT
-    )
-    """)
-    
-    conn.commit()
-    conn.close()
+    from lib.db.models import Project, Worker, Assignment
+    Base.metadata.create_all(engine)

@@ -1,131 +1,90 @@
-import sqlite3
-from lib.db.connection import get_connection
+from lib.db.connection import get_session, initialize_db
+from lib.db.models import Project, Worker, Assignment
+from tabulate import tabulate
 
-# --- CREATE ---
-def create_project(name, location):
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO projects (name, location) VALUES (?, ?)", (name, location))
-    conn.commit()
-    conn.close()
+def create_project():
+    name = input("Project name: ")
+    location = input("Project location: ")
+    session = get_session()
+    p = Project(name=name, location=location)
+    session.add(p)
+    session.commit()
+    session.close()
     print(f"Project '{name}' added successfully!")
 
-def create_worker(name, role):
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO workers (name, role) VALUES (?, ?)", (name, role))
-    conn.commit()
-    conn.close()
+def create_worker():
+    name = input("Worker name: ")
+    role = input("Worker role: ")
+    session = get_session()
+    w = Worker(name=name, role=role)
+    session.add(w)
+    session.commit()
+    session.close()
     print(f"Worker '{name}' added successfully!")
 
-# --- READ ---
 def list_projects():
-    conn = get_connection()
-    cursor = conn.cursor()
-    rows = cursor.execute("SELECT * FROM projects").fetchall()
-    conn.close()
-    print("\n--- Projects ---")
-    for row in rows:
-        print(row)
+    session = get_session()
+    projects = session.query(Project).all()
+    session.close()
+    table = [(p.id, p.name, p.location) for p in projects]
+    print(tabulate(table, headers=["ID", "Name", "Location"], tablefmt="fancy_grid"))
 
 def list_workers():
-    conn = get_connection()
-    cursor = conn.cursor()
-    rows = cursor.execute("SELECT * FROM workers").fetchall()
-    conn.close()
-    print("\n--- Workers ---")
-    for row in rows:
-        print(row)
+    session = get_session()
+    workers = session.query(Worker).all()
+    session.close()
+    table = [(w.id, w.name, w.role) for w in workers]
+    print(tabulate(table, headers=["ID", "Name", "Role"], tablefmt="fancy_grid"))
 
-# --- UPDATE ---
-def update_project(project_id, name=None, location=None):
-    conn = get_connection()
-    cursor = conn.cursor()
-    if name:
-        cursor.execute("UPDATE projects SET name=? WHERE id=?", (name, project_id))
-    if location:
-        cursor.execute("UPDATE projects SET location=? WHERE id=?", (location, project_id))
-    conn.commit()
-    conn.close()
-    print(f"Project {project_id} updated successfully!")
+def assign_worker():
+    list_projects()
+    project_id = int(input("Project ID to assign worker to: "))
+    list_workers()
+    worker_id = int(input("Worker ID to assign: "))
+    session = get_session()
+    a = Assignment(project_id=project_id, worker_id=worker_id)
+    session.add(a)
+    session.commit()
+    session.close()
+    print(f"Worker {worker_id} assigned to project {project_id}.")
 
-def update_worker(worker_id, name=None, role=None):
-    conn = get_connection()
-    cursor = conn.cursor()
-    if name:
-        cursor.execute("UPDATE workers SET name=? WHERE id=?", (name, worker_id))
-    if role:
-        cursor.execute("UPDATE workers SET role=? WHERE id=?", (role, worker_id))
-    conn.commit()
-    conn.close()
-    print(f"Worker {worker_id} updated successfully!")
+def list_assignments():
+    session = get_session()
+    assignments = session.query(Assignment).all()
+    table = [(a.id, a.project.name, a.worker.name) for a in assignments]
+    session.close()
+    print(tabulate(table, headers=["Assignment ID", "Project", "Worker"], tablefmt="fancy_grid"))
 
-# --- DELETE ---
-def delete_project(project_id):
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM projects WHERE id=?", (project_id,))
-    conn.commit()
-    conn.close()
-    print(f"Project {project_id} deleted successfully!")
-
-def delete_worker(worker_id):
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM workers WHERE id=?", (worker_id,))
-    conn.commit()
-    conn.close()
-    print(f"Worker {worker_id} deleted successfully!")
-
-# --- MENU ---
 def menu():
+    initialize_db()  # Ensure tables exist
     while True:
         print("\n--- Construction Ops CLI ---")
         print("1. Add Project")
         print("2. Add Worker")
         print("3. List Projects")
         print("4. List Workers")
-        print("5. Update Project")
-        print("6. Update Worker")
-        print("7. Delete Project")
-        print("8. Delete Worker")
-        print("9. Exit")
-
+        print("5. Assign Worker to Project")
+        print("6. List Assignments")
+        print("7. Exit")
         choice = input("Enter choice: ")
 
         if choice == "1":
-            name = input("Project name: ")
-            location = input("Project location: ")
-            create_project(name, location)
+            create_project()
         elif choice == "2":
-            name = input("Worker name: ")
-            role = input("Worker role: ")
-            create_worker(name, role)
+            create_worker()
         elif choice == "3":
             list_projects()
         elif choice == "4":
             list_workers()
         elif choice == "5":
-            project_id = input("Project ID to update: ")
-            name = input("New name (leave blank to skip): ")
-            location = input("New location (leave blank to skip): ")
-            update_project(project_id, name or None, location or None)
+            assign_worker()
         elif choice == "6":
-            worker_id = input("Worker ID to update: ")
-            name = input("New name (leave blank to skip): ")
-            role = input("New role (leave blank to skip): ")
-            update_worker(worker_id, name or None, role or None)
+            list_assignments()
         elif choice == "7":
-            project_id = input("Project ID to delete: ")
-            delete_project(project_id)
-        elif choice == "8":
-            worker_id = input("Worker ID to delete: ")
-            delete_worker(worker_id)
-        elif choice == "9":
             print("Goodbye!")
             break
         else:
-            print("Invalid choice, try again!")
+            print("Invalid choice!")
 
 if __name__ == "__main__":
     menu()

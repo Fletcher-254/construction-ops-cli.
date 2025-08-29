@@ -1,20 +1,30 @@
-from connection import get_connection
+from lib.db.connection import get_session, initialize_db
+from lib.db.models import Project, Worker, Assignment
 
 def seed_data():
-    conn = get_connection()
-    cursor = conn.cursor()
+    initialize_db()
+    session = get_session()
 
-    # Insert sample projects
-    cursor.execute("INSERT INTO projects (name, location) VALUES (?, ?)", ("Highway Expansion", "Nairobi"))
-    cursor.execute("INSERT INTO projects (name, location) VALUES (?, ?)", ("Office Complex", "Mombasa"))
+    # Projects
+    p1 = Project(name="Highway Expansion", location="Nairobi")
+    p2 = Project(name="Office Complex", location="Mombasa")
+    session.add_all([p1, p2])
 
-    # Insert sample workers
-    cursor.execute("INSERT INTO workers (name, role) VALUES (?, ?)", ("Alice", "Engineer"))
-    cursor.execute("INSERT INTO workers (name, role) VALUES (?, ?)", ("Bob", "Foreman"))
-    cursor.execute("INSERT INTO workers (name, role) VALUES (?, ?)", ("Charlie", "Laborer"))
+    # Workers
+    w1 = Worker(name="Alice", role="Engineer")
+    w2 = Worker(name="Bob", role="Foreman")
+    w3 = Worker(name="Charlie", role="Laborer")
+    session.add_all([w1, w2, w3])
+    session.commit()
 
-    conn.commit()
-    conn.close()
+    # Assignments
+    session.add_all([
+        Assignment(project=p1, worker=w1),
+        Assignment(project=p1, worker=w2),
+        Assignment(project=p2, worker=w3)
+    ])
+    session.commit()
+    session.close()
     print("Sample data inserted.")
 
 if __name__ == "__main__":
