@@ -1,59 +1,48 @@
-from lib.db.connection import get_session
-from lib.db.models import Project, Worker, Assignment
+from .connection import get_session, Base, engine
+from .models import Project, Worker
+
+# Create all tables
+Base.metadata.create_all(engine)
 
 def seed_data():
     session = get_session()
 
-    # Projects
+    # --- Sample Projects ---
     projects = [
-        ("Mombasa Road Expansion", "Mombasa"),
-        ("Nairobi Highway Rehabilitation", "Nairobi"),
-        ("Thika Town Feeder Roads", "Thika"),
-        ("Eldoret Admin Block Construction", "Eldoret"),
-        ("Kisumu Drainage Works", "Kisumu"),
-        ("Nakuru Small Roads Upgrade", "Nakuru"),
-        ("Kitale Residential Development", "Kitale")
+        Project(name="Mombasa Road Expansion", location="Mombasa"),
+        Project(name="Nairobi Highway Rehab", location="Nairobi"),
+        Project(name="Ngong Road Upgrade", location="Ngong"),
+        Project(name="Thika Superhighway Repair", location="Thika"),
+        Project(name="Kisumu Bridge Construction", location="Kisumu")
     ]
-    for name, location in projects:
-        session.add(Project(name=name, location=location))
+    session.add_all(projects)
 
-    # Workers
+    # --- Sample Workers  ---
     workers = [
-        ("Alice", "Engineer"),
-        ("Bob", "Foreman"),
-        ("Charlie", "Laborer"),
-        ("Diana", "Technician"),
-        ("Edward", "Surveyor")
+        Worker(name="Alice", role="Engineer"),
+        Worker(name="Bob", role="Foreman"),
+        Worker(name="Charlie", role="Laborer"),
+        Worker(name="Diana", role="Surveyor"),
+        Worker(name="Ethan", role="Architect"),
+        Worker(name="Fiona", role="Engineer"),
+        Worker(name="George", role="Technician"),
+        Worker(name="Hannah", role="Laborer"),
+        Worker(name="Ian", role="Foreman"),
+        Worker(name="Julia", role="Project Manager")
     ]
-    for name, role in workers:
-        session.add(Worker(name=name, role=role))
+    session.add_all(workers)
+    session.commit()  # Commit projects and workers first to get IDs
 
-    session.commit()
-
-    # Assign workers to projects
-    project_ids = [p.id for p in session.query(Project).all()]
-    worker_ids = [w.id for w in session.query(Worker).all()]
-
-    # Some sample assignments
-    assignments = [
-        (project_ids[0], worker_ids[0]),
-        (project_ids[0], worker_ids[1]),
-        (project_ids[1], worker_ids[0]),
-        (project_ids[1], worker_ids[2]),
-        (project_ids[2], worker_ids[1]),
-        (project_ids[3], worker_ids[3]),
-        (project_ids[4], worker_ids[4]),
-        (project_ids[5], worker_ids[2]),
-        (project_ids[6], worker_ids[0]),
-        (project_ids[6], worker_ids[4])
-    ]
-
-    for proj_id, worker_id in assignments:
-        session.add(Assignment(project_id=proj_id, worker_id=worker_id))
+    # --- Assign workers to projects ---
+    projects[0].workers.extend([workers[0], workers[1], workers[2]])  # Mombasa Road
+    projects[1].workers.extend([workers[3], workers[4], workers[5]])  # Nairobi Highway
+    projects[2].workers.extend([workers[6], workers[7]])               # Ngong Road
+    projects[3].workers.extend([workers[8], workers[9]])               # Thika Superhighway
+    projects[4].workers.extend([workers[0], workers[4], workers[7]])  # Kisumu Bridge
 
     session.commit()
     session.close()
-    print("Sample data inserted.")
+    print("Database seeded successfully!")
 
 if __name__ == "__main__":
     seed_data()

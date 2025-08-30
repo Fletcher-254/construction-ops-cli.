@@ -1,28 +1,112 @@
-# Construction Ops CLI
+# Construction Operations CLI
 
-A command-line interface (CLI) application to manage construction projects, workers, and assignments. Built in Python with SQLite and SQLAlchemy ORM.
+**Author:** Fletcher Nyawira  
+**Project Type:** Python CLI Tool  
+**Database:** SQLite  
+**ORM:** SQLAlchemy  
+
+---
+
+## Project Overview
+
+The **Construction Operations CLI** is a command-line interface tool designed to help construction project managers efficiently manage projects and workers. The tool allows users to:
+
+- Create, read, update, and delete projects and workers.  
+- Assign workers to multiple projects (many-to-many relationship).  
+- Unassign workers from projects.  
+- View a snapshot of the database showing all projects with assigned workers and all workers with their projects.  
+
+This tool is intended for small-scale construction operations or as a learning project for project and workforce management.
+
+---
 
 ## Features
 
-- Add and list projects
-- Add and list workers
-- Assign workers to projects
-- View project snapshots showing all workers assigned per project
-- Seed the database with sample Kenyan construction projects
+1. Add Projects and Workers  
+2. List Projects and Workers  
+3. Update and Delete  
+4. Assign/Unassign Workers to Projects  
+5. Database Snapshot  
 
-## Requirements
+---
 
-- Python 3.10+
-- Pipenv
-- SQLite
-- Libraries: SQLAlchemy, tabulate
+## Project Structure
 
-## Setup
+# Construction Operations CLI
 
-1. Clone the repository:
+**Author:** Fletcher Nyawira  
+**Project Type:** Python CLI Tool  
+**Database:** SQLite  
+**ORM:** SQLAlchemy  
+
+---
+
+## Overview
+
+A command-line interface to manage construction projects and workers. Features:
+
+- Create, read, update, and delete projects and workers  
+- Assign workers to multiple projects and unassign them  
+- View a database snapshot showing projects and assigned workers  
+
+---
+
+## Features
+
+1. Add Projects and Workers  
+2. List Projects and Workers  
+3. Update and Delete entries  
+4. Assign/Unassign Workers to Projects  
+5. Database Snapshot  
+
+---
+
+## Project Structure
+
+construction_ops_cli/
+│ README.md
+│ Pipfile
+│ Pipfile.lock
+│ construction_ops.db
+│
+└───lib
+│ cli.py
+│ init.py
+│
+└───db
+│ connection.py
+│ models.py
+│ seed.py
+│ init.py
+
+
+---
+
+## Installation
 
 ```bash
-git clone <your-repo-url>
+git clone <repository-url>
 cd construction_ops_cli
+pip install pipenv
+pipenv install
+pipenv shell
+python -m lib.db.seed
 
-Author:Fletcher Kariuki
+python -m lib.cli
+
+Usage
+
+Run the CLI:
+python -m lib.cli
+
+
+Menu options:
+Follow the prompts to perform actions.
+
+Technologies Used
+Python 3.10+
+SQLite
+SQLAlchemy
+Tabulate
+
+Author- Fletcher Nyawira
